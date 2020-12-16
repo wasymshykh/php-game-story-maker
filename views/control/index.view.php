@@ -37,9 +37,9 @@
             <td>0</td>
 
             <td>
-                <a href="<?=URL?>/control/edit_game?id=<?=$game['game_id']?>">edit</a>
+                <a href="<?=URL?>/control/edit_game.php?id=<?=$game['game_id']?>">edit</a>
                 
-                <button class="delete_game" value="<?=$game['game_id']?>">delete</button>
+                <button class="delete-game" value="<?=$game['game_id']?>">delete</button>
             </td>
         </tr>
         <?php endforeach; ?>
@@ -83,6 +83,23 @@
         $.ajax('<?=URL?>/control/api/category_api.php?delete='+category_id, {
             'success': (e) => {
                 category_row.remove()
+            },
+            'error': (e) => {
+                console.log('no');
+            }
+        });
+
+    })
+    
+    
+    $('.delete-game').on('click', (e) => {
+
+        let game_id = e.target.value;
+        let game_row = $(e.target).parent().parent();
+
+        $.ajax('<?=URL?>/control/api/game_api.php?delete='+game_id, {
+            'success': (e) => {
+                game_row.remove()
             },
             'error': (e) => {
                 console.log('no');

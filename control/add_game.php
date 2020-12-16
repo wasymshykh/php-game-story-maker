@@ -31,7 +31,7 @@ if (isset($_POST) && !empty($_POST)) {
     
                 if ($_FILES["picture-file"]["size"] < 500000) {
                     if (move_uploaded_file($_FILES["picture-file"]["tmp_name"], $target_file)) {
-                        $picture = $file_name;
+                        $picture = URL . '/uploads/images/'. $file_name;
                     } else {
                         $error = 'Sorry could not upload the picture';
                     }
@@ -60,7 +60,7 @@ if (isset($_POST) && !empty($_POST)) {
 
             if ($_FILES["audio-file"]["size"] < 500000) {
                 if (move_uploaded_file($_FILES["audio-file"]["tmp_name"], $target_file)) {
-                    $audio = $file_name;
+                    $audio = URL . '/uploads/media/'. $file_name;
                 } else {
                     $error = 'Sorry could not upload the audio';
                 }
