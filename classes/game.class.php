@@ -91,6 +91,17 @@ class Game
         return false;
     }
 
+    public function get_all_game_information ($game_id)
+    {
+        $r = $this->get_game_by("game_id", $game_id);
+        if ($r && !empty($r)) {
+            
+            return $r;
+
+        }
+        return [];
+    }
+
     public function get_conditions()
     {
         $q = 'SELECT * FROM `conditions`';
@@ -180,6 +191,40 @@ class Game
             return $s->fetchAll();
         }
         return [];
+    }
+
+    public function get_all_texts_by_round($round_id)
+    {
+        $q = 'SELECT * FROM `text_blocks` WHERE `tb_round_id` = :i';
+        $s = $this->db->prepare($q);
+        $s->bindParam(':i', $round_id);
+        if ($s->execute()) {
+            return $s->fetchAll();
+        }
+        return [];
+    }
+    public function get_all_answers_by_round($round_id)
+    {
+        $q = 'SELECT * FROM `answer_blocks` WHERE `ab_round_id` = :i';
+        $s = $this->db->prepare($q);
+        $s->bindParam(':i', $round_id);
+        if ($s->execute()) {
+            return $s->fetchAll();
+        }
+        return [];
+    }
+
+    public function insert_round ($game_id, $round_number)
+    {
+        $q = 'INSERT INTO `rounds` (`round_game_id`, `round_number`) VALUE (:g, :n)';
+        $s = $this->db->prepare($q);
+        $s->bindParam(":g", $game_id);
+        $s->bindParam(":n", $round_number);
+        
+        if ($s->execute()) {
+            return $this->db->lastInsertId();
+        }
+        return false;
     }
 
     public function insert_tbs ($data)

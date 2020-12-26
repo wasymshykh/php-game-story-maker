@@ -18,13 +18,41 @@ if (!$game) {
     go(URL . '/control');
 }
 
-$game_conditions = $g->get_game_conditions ($game['game_id']);
-$sorted_conditions = [];
-foreach ($game_conditions as $c) {
-    $sorted_conditions[$c['gc_condition_id']] = $c['gc_condition_value'];
+// storing for easier access
+$conditions_by_id = [];
+$conditions_by_name = [];
+foreach ($conditions as $condition) {
+    $conditions_by_id[$condition['condition_id']] = $condition['condition_name'];
+    $conditions_by_name[$condition['condition_name']] = $condition['condition_id'];
 }
 
+// getting saved condition values
+$game_conditions = $g->get_game_conditions ($game['game_id']);
+$conditions_value_by_id = [];
+$conditions_value_by_name = [];
+foreach ($game_conditions as $c) {
+    $conditions_value_by_id[$c['gc_condition_id']] = $c['gc_condition_value'];
+    $conditions_value_by_name[$conditions_by_id[$c['gc_condition_id']]] = $c['gc_condition_value'];
+}
 $rounds = $g->get_games_rounds($game['game_id']);
+
+$rounds_details = [];
+$condition_details = [];
+foreach ($rounds as $round) {
+    $rounds_details[$round['round_id']]['details'] = $round;
+    $rounds_details[$round['round_id']]['texts'] = $g->get_all_texts_by_round($round['round_id']);
+    $rounds_details[$round['round_id']]['answers'] = $g->get_all_answers_by_round($round['round_id']);
+
+    $n = 1;
+    foreach ($rounds_details[$round['round_id']]['answers'] as $answer) {
+        $text = "r".$round['round_number'].'a'.$n;
+        if ($round['round_number'] === '0') {
+            $text = "item".$n;
+        }
+        $n = $n + 1;
+        $condition_details[$text] = ['condition_id' => $conditions_by_name[$text], 'condition_value' => $conditions_value_by_name[$text] ?? ''];
+    }
+}
 
 if (isset($_POST) && !empty($_POST)) {
 
@@ -59,7 +87,6 @@ if (isset($_POST) && !empty($_POST)) {
             $g->update_game_conditions ($update, $game['game_id']);
         }
     }
-
     
     if (isset($_POST['game_id'])) {
 

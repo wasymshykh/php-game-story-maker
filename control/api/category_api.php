@@ -30,3 +30,21 @@ if (isset($_GET['delete'])) {
 
 }
 
+
+else {
+
+    $g = new Game($db);
+
+    $r = $g->get_categories();
+    if ($r) {
+        http_response_code(200);
+        echo json_encode(['code' => 200, 'type' => 'success', 'message' => $r]);
+        die();
+    } else {
+        http_response_code(400);
+        echo json_encode(['code' => 400, 'type' => 'error', 'message' => 'Categories cannot be retrived.']);
+        die();
+    }
+
+}
+
