@@ -227,24 +227,203 @@ class Game
         return false;
     }
 
+    public function update_game_information($data, $game_id)
+    {
+        $q = "UPDATE `games` SET";
+        $i = 0;
+        foreach ($data as $column => $value) {
+            if ($i > 0) {
+                $q .= ", ";
+            }
+            $q .= " `$column` = '$value'";
+        }
+        $q .= "WHERE `game_id` = '$game_id'";
+
+        $s = $this->db->prepare($q);
+
+        return $s->execute();
+    }
+
     public function insert_tbs ($data)
     {
         $sorted = [];
+        
         foreach ($data as $round_id => $tbs) {
             for ($i=0; $i < count($tbs['condition_1']); $i++) {
-                array_push($sorted, [
-                    'round_id' => $round_id, 
-                    'condition_1' => $tbs['condition_1'][$i], 
-                    'condition_between' => $tbs['condition_between'][$i], 
-                    'condition_2' => $tbs['condition_2'][$i], 
-                    'text' => $tbs['text'][$i], 
-                    'autoset' => $tbs['autoset'][$i]
+                if (!array_key_exists($round_id, $sorted)) {
+                    $sorted[$round_id] = [];
+                }
+                array_push($sorted[$round_id], [
+                    'tb_condition_1_id' => $tbs['condition_1'][$i], 
+                    'tb_condition_between' => $tbs['condition_between'][$i], 
+                    'tb_condition_2_id' => $tbs['condition_2'][$i], 
+                    'tb_text' => $tbs['text'][$i], 
+                    'tb_auto_set' => $tbs['autoset'][$i]
                 ]);
             }
         }
 
-        die(var_dump($sorted));
+        $to_insert = [];
+        $to_update = [];
+        $to_remove = [];
 
+        foreach ($sorted as $round_id => $textboxes) {
+
+            $old_textboxes = $this->get_all_texts_by_round($round_id);
+
+            if (count($textboxes) >= count($old_textboxes)) {
+                // that means new text box is added
+                $i = 0;
+                for (; $i < count($old_textboxes); $i++) {
+                    // check if the row needs to be updated
+                    if (normal_text($old_textboxes[$i]['tb_text']) !== $textboxes[$i]['tb_text'] || normal_text($old_textboxes[$i]['tb_condition_1_id']) !== $textboxes[$i]['tb_condition_1_id'] || normal_text($old_textboxes[$i]['tb_condition_between']) !== $textboxes[$i]['tb_condition_between'] || normal_text($old_textboxes[$i]['tb_condition_2_id']) !== $textboxes[$i]['tb_condition_2_id'] || normal_text($old_textboxes[$i]['tb_auto_set']) !== $textboxes[$i]['tb_auto_set']) {
+                        $to_update[$old_textboxes[$i]['tb_id']] = $textboxes[$i];
+                    }
+                }
+                
+                for (; $i < count($textboxes); $i++) {
+                    // the extra new boxes
+                    array_push($to_insert, $textboxes[$i]);
+                    $to_insert[count($to_insert)-1]['tb_round_id'] = $round_id;
+                }
+            } else {
+
+                $i = 0;
+                for (; $i < count($textboxes); $i++) {
+                    // check if the row needs to be updated
+                    if (normal_text($old_textboxes[$i]['tb_text']) !== $textboxes[$i]['tb_text'] || normal_text($old_textboxes[$i]['tb_condition_1_id']) !== $textboxes[$i]['tb_condition_1_id'] || normal_text($old_textboxes[$i]['tb_condition_between']) !== $textboxes[$i]['tb_condition_between'] || normal_text($old_textboxes[$i]['tb_condition_2_id']) !== $textboxes[$i]['tb_condition_2_id'] || normal_text($old_textboxes[$i]['tb_auto_set']) !== $textboxes[$i]['tb_auto_set']) {
+                        $to_update[$old_textboxes[$i]['tb_id']] = $textboxes[$i];
+                    }
+                }
+
+                for (; $i < count($old_textboxes); $i++) {
+                    // the extra new boxes
+                    array_push($to_remove, $old_textboxes[$i]);
+                }
+
+            }
+            
+        }
+        
+        $error = false;
+        $result = null;
+        if (!empty($to_insert)) {
+            $result = $this->insert_text_boxes($to_insert);
+            if ($result === false) {
+                $error .= "Error while inserting the data. ";
+            }
+        }
+
+        if (!empty($to_update)) {
+            $result = $this->update_text_boxes($to_update);
+            if ($result['failure'] > 0) {
+                $error .= "Error while updating the data. ";
+            }
+        }
+
+        if (!empty($to_remove)) {
+            $result = $this->remove_text_boxes($to_remove);
+            if ($result) {
+                $error .= "Error while removing the data. ";
+            }
+        }
+
+        if ($error) {
+            return ['status' => false, 'message' => $error];
+        }
+
+        return ['status' => true];
+    }
+
+    public function remove_text_boxes ($boxes)
+    {
+        $in = "";
+        $i = 0;
+        foreach ($boxes as $box) {
+            if ($i > 0) {
+                $in .= ", ";
+            }
+            $in .= "'".$box['tb_id']."'";
+            $i++;
+        }
+
+        $q = "DELETE FROM `text_blocks` WHERE `tb_id` IN ($in)";
+        $s = $this->db->prepare($q);
+        
+        return $s->execute();
+    }
+
+    public function update_text_boxes ($boxes)
+    {
+        $failure = 0;
+        $success = 0;
+
+        foreach ($boxes as $tb_id => $text_box) {
+
+            $q = "UPDATE `text_blocks` SET `tb_text` = :t, `tb_condition_1_id` = :c1, `tb_condition_between` = :cb, `tb_condition_2_id` = :c2, `tb_auto_set` = :a WHERE `tb_id` = :i";
+            $s = $this->db->prepare($q);
+            $s->bindParam(":i", $tb_id);
+            $s->bindParam(":t", $text_box['tb_text']);
+
+            $c1 = !empty($text_box['tb_condition_1_id']) ? $text_box['tb_condition_1_id'] : NULL;
+            $s->bindParam(":c1", $c1);
+
+            $s->bindParam(":cb", $text_box['tb_condition_between']);
+
+            $c2 = !empty($text_box['tb_condition_2_id']) ? $text_box['tb_condition_2_id'] : NULL;
+            $s->bindParam(":c2", $c2);
+
+            $a = !empty($text_box['tb_auto_set']) ? $text_box['tb_auto_set'] : NULL;
+            $s->bindParam(":a", $a);
+            
+            if ($s->execute()) {
+                $success += 1;
+            } else {
+                $failure += 1;
+            }
+
+        }
+
+        return ['success' => $success, 'failure' => $failure];
+    }
+
+
+    public function insert_text_boxes ($boxes)
+    {
+        $cols = "";
+        $vals = "";
+
+        $i = 0;
+        foreach ($boxes[0] as $col => $val) {
+            if ($i > 0) {
+                $cols .= ", ";
+            }
+            $cols .= "`$col`";
+            $i++;
+        }
+
+        $i = 0;
+        foreach ($boxes as $box) {
+            if ($i > 0) {
+                $vals .= ", ";
+            }
+            $vals .= "(";
+            $j = 0;
+            foreach ($box as $col => $val) {
+                if ($j > 0) {
+                    $vals .= ", ";
+                }
+                $vals .= !empty($val) ? "'$val'" : "NULL";
+                $j++;
+            }
+            $vals .= ")";
+            $i++;
+        }
+        
+        $q = "INSERT INTO `text_blocks` ($cols) VALUES $vals";
+        $s = $this->db->prepare($q);
+        
+        return $s->execute();
     }
 
 

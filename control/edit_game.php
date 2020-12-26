@@ -90,33 +90,7 @@ if (isset($_POST) && !empty($_POST)) {
     
     if (isset($_POST['game_id'])) {
 
-        $tbs = [];
-    
-        // condition 1
-        foreach ($_POST['conditions_1'] as $round => $values) {
-            $tbs[$round]['condition_1'] = $values;  
-        }
-        // condition between
-        foreach ($_POST['condition_between'] as $round => $values) {
-            $tbs[$round]['condition_between'] = $values;    
-        }
-        // condition 2
-        foreach ($_POST['conditions_2'] as $round => $values) {
-            $tbs[$round]['condition_2'] = $values;    
-        }
-        // text
-        foreach ($_POST['text'] as $round => $values) {
-            $tbs[$round]['text'] = $values;
-        }
-        // auto
-        foreach ($_POST['autoset'] as $round => $values) {
-            $tbs[$round]['autoset'] = $values;  
-        }
         
-        // insert tbs
-        $g->insert_tbs($tbs);
-        
-        var_dump($tbs);
         
     }
 }

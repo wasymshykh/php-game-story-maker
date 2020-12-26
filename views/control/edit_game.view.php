@@ -18,9 +18,9 @@
 
 <div style="flex: 2">
 
-    <form action="" method="post">
+    <form action="" method="post" id="page-form">
 
-        <input type="hidden" name="game_id" value="<?=$game['game_id']?>">
+        <input type="hidden" name="save_game" value="<?=$game['game_id']?>">
 
         <div>
             <label for="title">Story Title</label>
@@ -35,6 +35,10 @@
             </select>
         </div>
         <div>
+            <label for="author">Author</label>
+            <input type="text" name="author" id="author" value="<?=$_POST['author'] ?? $game['game_author']?>">
+        </div>
+        <div>
             <label>Story Picture</label>
             <label for="picture">URL</label>
             <input type="text" name="picture" id="picture" value="<?=$_POST['picture'] ?? $game['game_picture']?>">
@@ -47,9 +51,8 @@
 
 
         <div id="rounds">
-
         <?php foreach ($rounds_details as $round_id => $round_details): ?>
-            <div class="round-box" data-round="<?=$round_details['round_number']?>" data-round-id="<?=$round_id?>">
+            <div class="round-box" data-round="<?=$round_details['details']['round_number']?>" data-round-id="<?=$round_id?>">
                 <div class="round-questions">
                     <?php foreach ($round_details['texts'] as $textblock):?>
                     <div class="round-question">
@@ -154,17 +157,15 @@
                 
             </div>
             <?php endforeach; ?>
-            
-        </div>
-        <div class="">
-            <br>
-            <button type="button" class="add-more-rounds" onclick="add_round()">Add more round</button>
-            <br>
-            <br>
         </div>
 
-        
-        <input type="submit" value="save">
+        <div class="round-button">
+            <button type="button" class="add-more-rounds" onclick="add_round()">Add more round</button>
+        </div>
+
+        <div class="page-submit">
+            <input type="submit" value="save" id="save">
+        </div>
 
     </form>
 
@@ -175,6 +176,25 @@
 
 <script>
 
+
+$('#save').on('click', (e) => {
+
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+
+    var form = $('#page-form');
+    var url = "<?=URL?>/control/api/game_api.php";
+
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: form.serialize(), // serializes the form's elements.
+        success: function(data)
+        {
+            console.log(data); // show response from the php script.
+        }
+        });
+
+})
     
 
 function add_events_on_buttons () {
@@ -234,19 +254,24 @@ function get_condition_box_html (id, name) {
 
 function add_round () {
     let round_number = $('.round-box').length;
-    $.ajax('<?=URL?>/control/api/game_api.php?add_round='+game_id+'&round_number='+round_number, {
-            'success': (e) => {
-                if (e.code === 200) {
-                    let round_id = e.message.round_id;
-                    
-                    get_round_html(round_number, round_id);
-                    
+
+    if (round_number < 10) {
+
+        $.ajax('<?=URL?>/control/api/game_api.php?add_round='+game_id+'&round_number='+round_number, {
+                'success': (e) => {
+                    if (e.code === 200) {
+                        let round_id = e.message.round_id;
+                        
+                        get_round_html(round_number, round_id);
+                        
+                    }
+                },
+                'error': (e) => {
+                    console.log('no');
                 }
-            },
-            'error': (e) => {
-                console.log('no');
-            }
-        });
+            });
+
+    }
 
 }
 
