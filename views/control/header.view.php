@@ -47,12 +47,14 @@
         background-color: #777777;
       }
 
-      .round-question {
+      .round-question,
+      .round-answer {
         display: flex;
         flex-direction: column;
         margin-bottom: 0.5em;
         padding-bottom: 0.5em;
         border-bottom: 1px solid #e0e0e0;
+        position: relative;
       }
 
       .round-answer-conditions,
@@ -156,6 +158,23 @@
       }.alert-box.error {
         background-color: #c30000;
         color: #f3f3f3;
+      }
+
+      .round-question-remove,
+      .round-answer-remove {
+        padding: 0.3em 1em;
+        background-color: #c30000;
+        cursor: pointer;
+        position: absolute;
+        right: -6em;
+        top: 50%;
+        font-size: 0.8em;
+        color: #f3f3f3;
+      }
+      .round-question-remove strong,
+      .round-answer-remove strong {
+        font-weight: 700;
+        pointer-events: none;
       }
       
 

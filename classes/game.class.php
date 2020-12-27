@@ -326,7 +326,7 @@ class Game
 
         if (!empty($to_remove)) {
             $result = $this->remove_answer_boxes($to_remove);
-            if ($result) {
+            if ($result === false) {
                 $error .= "Error while removing the data. ";
             }
         }
@@ -512,7 +512,7 @@ class Game
 
         if (!empty($to_remove)) {
             $result = $this->remove_text_boxes($to_remove);
-            if ($result) {
+            if ($result === false) {
                 $error .= "Error while removing the data. ";
             }
         }

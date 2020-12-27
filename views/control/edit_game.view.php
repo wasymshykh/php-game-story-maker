@@ -91,6 +91,7 @@
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        <div class="round-question-remove"><strong>X</strong> - remove</div>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -146,6 +147,7 @@
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        <div class="round-answer-remove"><strong>X</strong> - remove</div>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -173,7 +175,7 @@
 </div>
 
 <div class="alert-box">
-    <div class="alert-message">hello</div>
+    <div class="alert-message"></div>
 </div>
 
 </div>
@@ -243,17 +245,18 @@ function show_alert (message, type) {
 
 function add_events_on_buttons () {
 
-    $('.add-more-questions').on('click', (e) => {
+    $('.add-more-questions').unbind("click").on('click', (e) => {
         let questions_block = $(e.target).parent().parent().find('.round-questions');
         let round_id = questions_block.parent().attr('data-round-id');
 
         if (questions_block.children().length < 10) {
             questions_block.append(get_question_html(round_id));
+            add_events_on_buttons();
         }
     });
 
 
-    $('.add-more-answers').on('click', (e) => {
+    $('.add-more-answers').unbind("click").on('click', (e) => {
         let answers_block = $(e.target).parent().parent().find('.round-answers');
         let round_id = answers_block.parent().attr('data-round-id');
 
@@ -270,8 +273,32 @@ function add_events_on_buttons () {
             }
             add_to_select_boxes(option_name);
             add_to_condition_boxes(option_name);
+            add_events_on_buttons();
         }
     });
+
+    $('.round-question-remove').unbind("click").on('click', (e) => {
+        $(e.target).parent().remove();
+    })
+
+    $('.round-answer-remove').unbind("click").on('click', (e) => {
+        
+        let round_number = $(e.target).parent().parent().parent().attr('data-round');
+        
+        let to_remove = "";
+        $(e.target).parent().parent().children().each((i, el) => {
+            if (el === e.target.parentElement) {
+                to_remove = 'r'+round_number+'a'+($(e.target).parent().parent().children().length);
+                if (round_number === '0') {
+                    to_remove = 'item'+($(e.target).parent().parent().children().length);
+                }
+            }
+        })
+
+        remove_from_select_boxes(to_remove);
+        remove_from_condition_boxes(to_remove);
+        $(e.target).parent().remove();
+    })
 
 }
 add_events_on_buttons();
@@ -284,6 +311,27 @@ function add_to_select_boxes (e) {
     answers.each(i => {
         $(answers[i]).append($('<option>', {value:conditions_by_name[e], text:e}));
     });
+}
+
+function remove_from_select_boxes (e) {
+    let answers = $('.select-conditions');
+    answers.each(i => {
+        let opts = $(answers[i]).children();
+        opts.each((o, el) => {
+            if (el.text === e) {
+                el.remove();
+            }
+        });
+    });
+}
+
+function remove_from_condition_boxes (e) {
+    let condition_boxes = $('.condition-boxes').children();
+    condition_boxes.each((i, el) => {
+        if ($(el).find('label').text() === e) {
+            el.remove();
+        }
+    })
 }
 
 function add_to_condition_boxes(e) {
@@ -363,6 +411,8 @@ function get_question_html (round_id) {
                         ${options_html}
                     </select>
                 </div>
+                
+                <div class="round-question-remove"><strong>X</strong> - remove</div>
             </div>`;
 
 }
@@ -407,6 +457,7 @@ function get_answer_html (round_id) {
                         ${options_html}
                     </select>
                 </div>
+                <div class="round-answer-remove"><strong>X</strong> - remove</div>
             </div>`;
 
 }
