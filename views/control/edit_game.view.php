@@ -3,7 +3,7 @@
 
 <div style="flex: 1; border-right: 1px solid #e0e0e0">
     <h5>Conditions</h5>
-    <form method="POST" action="">
+    <form method="POST" action="" id="conditions-form">
         <div class="condition-boxes">
             <?php foreach ($condition_details as $condition_name => $condition): ?>
                 <div class="condition-box">
@@ -12,13 +12,14 @@
                 </div>
             <?php endforeach; ?>
         </div>
-        <button type="submit">Save</button>
+        <input type="hidden" name="save_conditions" value="<?=$game['game_id']?>">
+        <button type="submit" id="save-conditions">Save</button>
     </form>
 </div>
 
 <div style="flex: 2">
 
-    <form action="" method="post" id="page-form">
+    <form action="" method="POST" id="page-form">
 
         <input type="hidden" name="save_game" value="<?=$game['game_id']?>">
 
@@ -138,7 +139,7 @@
                             </select>
                             <br>
                             <label>when user choose it then unset </label>
-                            <select name="aautoset[<?=$round_id?>][]" class="select-conditions">
+                            <select name="aautounset[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">-- *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
                                 <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_unset'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
@@ -171,30 +172,73 @@
 
 </div>
 
+<div class="alert-box">
+    <div class="alert-message">hello</div>
+</div>
+
 </div>
 
 
 <script>
 
-
-$('#save').on('click', (e) => {
-
-    e.preventDefault(); // avoid to execute the actual submit of the form.
-
-    var form = $('#page-form');
+$('#save-conditions').on('click', (e) => {
+    e.preventDefault();
+    var form = $('#conditions-form');
     var url = "<?=URL?>/control/api/game_api.php";
-
     $.ajax({
         type: "POST",
         url: url,
-        data: form.serialize(), // serializes the form's elements.
+        data: form.serialize(),
         success: function(data)
         {
-            console.log(data); // show response from the php script.
+            if (data.code === 200) {
+                show_alert(data.message, 'success');
+            } else {
+                show_alert(data.message, 'error');
+            }
         }
-        });
-
+    });
 })
+
+$('#save').on('click', (e) => {
+    e.preventDefault();
+    var form = $('#page-form');
+    var url = "<?=URL?>/control/api/game_api.php";
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: form.serialize(),
+        success: function(data)
+        {
+            if (data.code === 200) {
+                show_alert(data.message, 'success');
+            } else {
+                show_alert(data.message, 'error');
+            }
+        }
+    });
+})
+
+function show_alert (message, type) {
+    
+    let ab = $('.alert-box');
+    ab.find('.alert-message').text(message);
+
+    if (type === 'success') {
+        ab.removeClass('error');
+        ab.addClass('success');
+        ab.addClass('show');
+    } else if (type === 'error') {
+        ab.removeClass('success');
+        ab.addClass('error');
+        ab.addClass('show');
+    }
+
+    setTimeout(() => {
+        ab.removeClass('show');
+    }, 1000);
+
+}
     
 
 function add_events_on_buttons () {
@@ -358,7 +402,7 @@ function get_answer_html (round_id) {
                     </select>
                     <br>
                     <label>when user choose it then unset </label>
-                    <select name="aautoset[${round_id}][]" class="select-conditions">
+                    <select name="aautounset[${round_id}][]" class="select-conditions">
                         <option value="">-- *</option>
                         ${options_html}
                     </select>

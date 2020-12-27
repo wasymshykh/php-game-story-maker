@@ -244,6 +244,195 @@ class Game
         return $s->execute();
     }
 
+    
+    public function insert_abs ($data)
+    {
+
+        $sorted = [];
+        
+        foreach ($data as $round_id => $abs) {
+            for ($i=0; $i < count($abs['acondition_1']); $i++) {
+                if (!array_key_exists($round_id, $sorted)) {
+                    $sorted[$round_id] = [];
+                }
+                array_push($sorted[$round_id], [
+                    'ab_condition_1_id' => $abs['acondition_1'][$i], 
+                    'ab_condition_between' => $abs['acondition_between'][$i], 
+                    'ab_condition_2_id' => $abs['acondition_2'][$i], 
+                    'ab_text' => $abs['atext'][$i], 
+                    'ab_auto_set' => $abs['aautoset'][$i],
+                    'ab_unset' => $abs['aautounset'][$i]
+                ]);
+            }
+        }
+
+        $to_insert = [];
+        $to_update = [];
+        $to_remove = [];
+
+        foreach ($sorted as $round_id => $answerboxes) {
+
+            $old_answerboxes = $this->get_all_answers_by_round($round_id);
+
+            if (count($answerboxes) >= count($old_answerboxes)) {
+                // that means new text box is added
+                $i = 0;
+                for (; $i < count($old_answerboxes); $i++) {
+                    // check if the row needs to be updated
+                    if (normal_text($old_answerboxes[$i]['ab_text']) !== $answerboxes[$i]['ab_text'] || normal_text($old_answerboxes[$i]['ab_condition_1_id']) !== $answerboxes[$i]['ab_condition_1_id'] || normal_text($old_answerboxes[$i]['ab_condition_between']) !== $answerboxes[$i]['ab_condition_between'] || normal_text($old_answerboxes[$i]['ab_condition_2_id']) !== $answerboxes[$i]['ab_condition_2_id'] || normal_text($old_answerboxes[$i]['ab_auto_set']) !== $answerboxes[$i]['ab_auto_set'] || normal_text($old_answerboxes[$i]['ab_unset']) !== $answerboxes[$i]['ab_unset']) {
+                        $to_update[$old_answerboxes[$i]['ab_id']] = $answerboxes[$i];
+                    }
+                }
+                
+                for (; $i < count($answerboxes); $i++) {
+                    // the extra new boxes
+                    array_push($to_insert, $answerboxes[$i]);
+                    $to_insert[count($to_insert)-1]['ab_round_id'] = $round_id;
+                }
+            } else {
+
+                $i = 0;
+                for (; $i < count($answerboxes); $i++) {
+                    // check if the row needs to be updated
+                    if (normal_text($old_answerboxes[$i]['ab_text']) !== $answerboxes[$i]['ab_text'] || normal_text($old_answerboxes[$i]['ab_condition_1_id']) !== $answerboxes[$i]['ab_condition_1_id'] || normal_text($old_answerboxes[$i]['ab_condition_between']) !== $answerboxes[$i]['ab_condition_between'] || normal_text($old_answerboxes[$i]['ab_condition_2_id']) !== $answerboxes[$i]['ab_condition_2_id'] || normal_text($old_answerboxes[$i]['ab_auto_set']) !== $answerboxes[$i]['ab_auto_set'] || normal_text($old_answerboxes[$i]['ab_unset']) !== $answerboxes[$i]['ab_unset']) {
+                        $to_update[$old_answerboxes[$i]['ab_id']] = $answerboxes[$i];
+                    }
+                }
+
+                for (; $i < count($old_answerboxes); $i++) {
+                    // the boxes needs to be removed
+                    array_push($to_remove, $old_answerboxes[$i]);
+                }
+
+            }
+            
+        }
+        
+        $error = false;
+        $result = null;
+        if (!empty($to_insert)) {
+            $result = $this->insert_answer_boxes($to_insert);
+            if ($result === false) {
+                $error .= "Error while inserting the data. ";
+            }
+        }
+
+        if (!empty($to_update)) {
+            $result = $this->update_answer_boxes($to_update);
+            if ($result['failure'] > 0) {
+                $error .= "Error while updating the data. ";
+            }
+        }
+
+        if (!empty($to_remove)) {
+            $result = $this->remove_answer_boxes($to_remove);
+            if ($result) {
+                $error .= "Error while removing the data. ";
+            }
+        }
+
+        if ($error) {
+            return ['status' => false, 'message' => $error];
+        }
+
+        return ['status' => true];
+    }
+
+    public function remove_answer_boxes ($boxes)
+    {
+        $in = "";
+        $i = 0;
+        foreach ($boxes as $box) {
+            if ($i > 0) {
+                $in .= ", ";
+            }
+            $in .= "'".$box['ab_id']."'";
+            $i++;
+        }
+
+        $q = "DELETE FROM `answer_blocks` WHERE `ab_id` IN ($in)";
+        $s = $this->db->prepare($q);
+        
+        return $s->execute();
+    }
+
+    public function update_answer_boxes ($boxes)
+    {
+        $failure = 0;
+        $success = 0;
+
+        foreach ($boxes as $ab_id => $answer_box) {
+
+            $q = "UPDATE `answer_blocks` SET `ab_text` = :t, `ab_condition_1_id` = :c1, `ab_condition_between` = :cb, `ab_condition_2_id` = :c2, `ab_auto_set` = :a, `ab_unset` = :au WHERE `ab_id` = :i";
+            $s = $this->db->prepare($q);
+            $s->bindParam(":i", $ab_id);
+            $s->bindParam(":t", $answer_box['ab_text']);
+
+            $c1 = !empty($answer_box['ab_condition_1_id']) ? $answer_box['ab_condition_1_id'] : NULL;
+            $s->bindParam(":c1", $c1);
+
+            $s->bindParam(":cb", $answer_box['ab_condition_between']);
+
+            $c2 = !empty($answer_box['ab_condition_2_id']) ? $answer_box['ab_condition_2_id'] : NULL;
+            $s->bindParam(":c2", $c2);
+
+            $a = !empty($answer_box['ab_auto_set']) ? $answer_box['ab_auto_set'] : NULL;
+            $s->bindParam(":a", $a);
+
+            $au = !empty($answer_box['ab_unset']) ? $answer_box['ab_unset'] : NULL;
+            $s->bindParam(":au", $au);
+            
+            if ($s->execute()) {
+                $success += 1;
+            } else {
+                $failure += 1;
+            }
+
+        }
+
+        return ['success' => $success, 'failure' => $failure];
+    }
+
+    public function insert_answer_boxes ($boxes)
+    {
+        $cols = "";
+        $vals = "";
+
+        $i = 0;
+        foreach ($boxes[0] as $col => $val) {
+            if ($i > 0) {
+                $cols .= ", ";
+            }
+            $cols .= "`$col`";
+            $i++;
+        }
+
+        $i = 0;
+        foreach ($boxes as $box) {
+            if ($i > 0) {
+                $vals .= ", ";
+            }
+            $vals .= "(";
+            $j = 0;
+            foreach ($box as $col => $val) {
+                if ($j > 0) {
+                    $vals .= ", ";
+                }
+                $vals .= !empty($val) ? "'$val'" : "NULL";
+                $j++;
+            }
+            $vals .= ")";
+            $i++;
+        }
+        
+        $q = "INSERT INTO `answer_blocks` ($cols) VALUES $vals";
+        $s = $this->db->prepare($q);
+        
+        return $s->execute();
+    }
+
+
+
     public function insert_tbs ($data)
     {
         $sorted = [];
@@ -297,7 +486,7 @@ class Game
                 }
 
                 for (; $i < count($old_textboxes); $i++) {
-                    // the extra new boxes
+                    // the boxes needs to be removed
                     array_push($to_remove, $old_textboxes[$i]);
                 }
 

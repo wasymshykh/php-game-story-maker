@@ -38,6 +38,14 @@ $rounds = $g->get_games_rounds($game['game_id']);
 
 $rounds_details = [];
 $condition_details = [];
+
+// adding default conditions
+foreach ($conditions as $condition) {
+    if (strpos($condition['condition_name'], "end") !== false || strpos($condition['condition_name'], "target") !== false) {
+        $condition_details[$condition['condition_name']] = ['condition_id' => $conditions_by_name[$condition['condition_name']], 'condition_value' => $conditions_value_by_name[$condition['condition_name']] ?? ''];
+    }
+}
+
 foreach ($rounds as $round) {
     $rounds_details[$round['round_id']]['details'] = $round;
     $rounds_details[$round['round_id']]['texts'] = $g->get_all_texts_by_round($round['round_id']);
@@ -56,43 +64,8 @@ foreach ($rounds as $round) {
 
 if (isset($_POST) && !empty($_POST)) {
 
-    if (isset($_POST['conditions'])) {
-        $insert = [];
-        $update = [];
     
-        foreach ($_POST['condition'] as $condition_id => $condition_value) {
-            if (empty(normal_text($condition_value))) {
-                continue;
-            }
-            $found = false;
-            $condition_value = normal_text($condition_value);
-            foreach ($game_conditions as $c) {
-                if ($c['gc_condition_id'] == $condition_id) {
-                    if ($c['gc_condition_value'] != $condition_value) {
-                        $update[$condition_id] = $condition_value;
-                    }
-                    $found = true;
-                    break;
-                }
-            }
-            if (!$found) {
-                $insert[$condition_id] = $condition_value;
-            }
-        }
-        
-        if (!empty($insert)) {
-            $g->insert_game_conditions ($insert, $game['game_id']);
-        }
-        if (!empty($update)) {
-            $g->update_game_conditions ($update, $game['game_id']);
-        }
-    }
-    
-    if (isset($_POST['game_id'])) {
 
-        
-        
-    }
 }
 
 include_once DIR . 'views/control/header.view.php';

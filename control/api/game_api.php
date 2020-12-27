@@ -105,7 +105,6 @@ elseif (isset($_GET['add_round']) && isset($_GET['round_number'])) {
             $text_boxes_save = null;
             // text boxes
             if (isset($_POST['conditions_1'])) {
-                
                 $tbs = [];
                 
                 // condition 1
@@ -140,14 +139,62 @@ elseif (isset($_GET['add_round']) && isset($_GET['round_number'])) {
 
             }
 
+            $answer_boxes_save = null;
+            // text boxes
+            if (isset($_POST['aconditions_1'])) {
+                $abs = [];
+                
+                // condition 1
+                foreach ($_POST['aconditions_1'] as $round => $values) {
+                    $abs[$round]['acondition_1'] = $values;  
+                }
+                // condition between
+                foreach ($_POST['acondition_between'] as $round => $values) {
+                    $abs[$round]['acondition_between'] = $values;    
+                }
+                // condition 2
+                foreach ($_POST['aconditions_2'] as $round => $values) {
+                    $abs[$round]['acondition_2'] = $values;    
+                }
+                // text
+                foreach ($_POST['atext'] as $round => $values) {
+                    $abs[$round]['atext'] = $values;
+                }
+                // auto set
+                foreach ($_POST['aautoset'] as $round => $values) {
+                    $abs[$round]['aautoset'] = $values;  
+                }
+                // auto unset
+                foreach ($_POST['aautounset'] as $round => $values) {
+                    $abs[$round]['aautounset'] = $values;  
+                }
+                
+                // insert abs
+                $result = $g->insert_abs($abs);
+                
+                if ($result['status']) {
+                    $answer_boxes_save = true;
+                } else {
+                    $answer_boxes_save = false;
+                }
+
+            }
+
 
             if ($normal_save !== false) {
+
+                if ($text_boxes_save === false || $answer_boxes_save === false) {
+                    http_response_code(500);
+                    echo json_encode(['code' => 500, 'type' => 'error', 'message' => "Couldn't save the data properly"]);
+                    die();
+                }
+
                 http_response_code(200);
                 echo json_encode(['code' => 200, 'type' => 'success', 'message' => "Data has been saved!"]);
                 die();
             } else {
                 http_response_code(500);
-                echo json_encode(['code' => 500, 'type' => 'error', 'message' => "Couldn't save the data"]);
+                echo json_encode(['code' => 500, 'type' => 'error', 'message' => "Couldn't save the data properly"]);
                 die();
             }
 
@@ -157,6 +204,56 @@ elseif (isset($_GET['add_round']) && isset($_GET['round_number'])) {
             die();
         }
 
+    }
+
+} else if (isset($_POST['save_conditions'])) {
+
+    if (isset($_POST['condition'])) {
+        $insert = [];
+        $update = [];
+        
+
+        $g = new Game($db);
+        $game_conditions = $g->get_game_conditions ($_POST['save_conditions']);
+
+    
+        foreach ($_POST['condition'] as $condition_id => $condition_value) {
+            if (empty(normal_text($condition_value))) {
+                continue;
+            }
+            $found = false;
+            $condition_value = normal_text($condition_value);
+            foreach ($game_conditions as $c) {
+                if ($c['gc_condition_id'] == $condition_id) {
+                    if ($c['gc_condition_value'] != $condition_value) {
+                        $update[$condition_id] = $condition_value;
+                    }
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $insert[$condition_id] = $condition_value;
+            }
+        }
+        
+        $success = true;
+        if (!empty($insert)) {
+            $success = $g->insert_game_conditions ($insert, $_POST['save_conditions']);
+        }
+        if (!empty($update)) {
+            $success = $g->update_game_conditions ($update, $_POST['save_conditions']);
+        }
+        
+        if ($success) {
+            http_response_code(200);
+            echo json_encode(['code' => 200, 'type' => 'success', 'message' => 'Condition values are saved.']);
+            die();
+        } else {
+            http_response_code(500);
+            echo json_encode(['code' => 500, 'type' => 'error', 'message' => 'Cannot update the conditions.']);
+            die();
+        }
     }
 
 } else if (isset($_GET['game'])) {

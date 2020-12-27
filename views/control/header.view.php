@@ -134,6 +134,29 @@
         border-radius: 3px;
         cursor: pointer;
       }
+
+      .alert-box {
+        position: fixed;
+        right: 10%;
+        bottom: 3%;
+        padding: 0.5em 1em;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.3s all;
+      }
+
+      .alert-box.show {
+        opacity: 1;
+        bottom: 5%;
+      }
+
+      .alert-box.success {
+        background-color: #15B097;
+        color: #f3f3f3;
+      }.alert-box.error {
+        background-color: #c30000;
+        color: #f3f3f3;
+      }
       
 
     </style>
