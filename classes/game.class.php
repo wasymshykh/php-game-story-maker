@@ -19,6 +19,51 @@ class Game
         return [];
     }
 
+    public function get_categories_front()
+    {
+        $data = [];
+        
+        $categories = $this->get_categories();
+        foreach ($categories as $category) {
+            $games = $this->get_game_by('game_category_id', $category['category_id'], true);
+            
+            array_push($data, $category);
+            $category_index = count($data) - 1;
+
+            foreach ($games as $game) {
+
+                if (!array_key_exists('games', $data[$category_index])) {
+                    $data[$category_index]['games'] = [];
+                }
+                array_push($data[$category_index]['games'], $game);
+                $game_index = count($data[$category_index]['games']) - 1;
+                
+                // rounds
+                $rounds = $this->get_games_rounds($game['game_id']);
+                foreach ($rounds as $round) {
+                    
+                    if (!array_key_exists('rounds', $data[$category_index]['games'][$game_index])) {
+                        $data[$category_index]['games'][$game_index]['rounds'] = [];
+                    }
+                    array_push($data[$category_index]['games'][$game_index]['rounds'], $round);
+                    $round_index = count($data[$category_index]['games'][$game_index]['rounds']) - 1;
+
+                    // text blocks
+                    $textblocks = $this->get_all_texts_by_round($round['round_id']);
+                    $data[$category_index]['games'][$game_index]['rounds'][$round_index]['textblocks'] = $textblocks;
+
+                    //  blocks
+                    $answerblocks = $this->get_all_answers_by_round($round['round_id']);
+                    $data[$category_index]['games'][$game_index]['rounds'][$round_index]['answerblocks'] = $answerblocks;
+                    
+                }
+
+            }
+        }
+
+        return $data;
+    }
+
     public function insert_category ($name)
     {
         $q = "INSERT INTO `categories` (`category_name`, `category_created`) VALUE (:n, :dt)";

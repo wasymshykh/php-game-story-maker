@@ -3,6 +3,7 @@
     session_start();
     define('DIR', dirname(__DIR__).'/');
     define('URL', "http://localhost/game-story-maker");
+    define('TEXT_CHARACTERS_GAME_THUMBNAIL', 80);
 
     // Either: development/production
     define('PROJECT_MODE', 'development'); 

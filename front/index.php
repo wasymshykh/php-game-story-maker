@@ -4,8 +4,7 @@ require_once '../config/init.php';
 
 $g = new Game($db);
 
-$categories = $g->get_categories();
-
+$categories = $g->get_categories_front();
 
 
 include_once DIR . 'views/control/header.view.php';
