@@ -19,7 +19,7 @@ class Game
         return [];
     }
 
-    public function get_categories_front()
+    public function get_categories_front($answers = false)
     {
         $data = [];
         
@@ -52,16 +52,47 @@ class Game
                     $textblocks = $this->get_all_texts_by_round($round['round_id']);
                     $data[$category_index]['games'][$game_index]['rounds'][$round_index]['textblocks'] = $textblocks;
 
-                    //  blocks
-                    $answerblocks = $this->get_all_answers_by_round($round['round_id']);
-                    $data[$category_index]['games'][$game_index]['rounds'][$round_index]['answerblocks'] = $answerblocks;
-                    
+                    if ($answers) {
+                        //  answer blocks
+                        $answerblocks = $this->get_all_answers_by_round($round['round_id']);
+                        $data[$category_index]['games'][$game_index]['rounds'][$round_index]['answerblocks'] = $answerblocks;
+                    }
                 }
-
             }
         }
 
         return $data;
+    }
+
+    public function get_game_front ($game_id)
+    {
+        
+        $game = $this->get_game_by('game_id', $game_id);
+
+        if ($game === false || empty($game)) {
+            return false;
+        }
+
+        // rounds
+        $rounds = $this->get_games_rounds($game['game_id']);
+        foreach ($rounds as $round) {
+            if (!array_key_exists('rounds', $game)) {
+                $game['rounds'] = [];
+            }
+            array_push($game['rounds'], $round);
+            $round_index = count($game['rounds']) - 1;
+
+            // text blocks
+            $textblocks = $this->get_all_texts_by_round($round['round_id']);
+            $game['rounds'][$round_index]['textblocks'] = $textblocks;
+
+            //  answer blocks
+            $answerblocks = $this->get_all_answers_by_round($round['round_id']);
+            $game['rounds'][$round_index]['answerblocks'] = $answerblocks;
+        }
+
+        return $game;
+        
     }
 
     public function insert_category ($name)
