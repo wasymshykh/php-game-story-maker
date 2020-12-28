@@ -17,7 +17,7 @@
             <th>Play End 3</th>
             <th>Play End 4</th>
             <th>Play End 5</th>
-            <th>Active</th>
+            <th>Status</th>
             <th></th>
         </tr>
     </thead>
@@ -30,11 +30,19 @@
             <td><?=$game['game_created']?></td>
             <td><?=$game['game_author']?></td>
 
-            <td>0</td>
-            <td>0</td>
-            <td>0</td>
-            <td>0</td>
-            <td>0</td>
+            <td><?=$game['game_end1']?></td>
+            <td><?=$game['game_end2']?></td>
+            <td><?=$game['game_end3']?></td>
+            <td><?=$game['game_end4']?></td>
+            <td><?=$game['game_end5']?></td>
+
+            <td>
+                <?php if($game['game_active'] === '1'): ?> 
+                    <a href="<?=URL?>/control/?inactive=<?=$game['game_id']?>">active</a> 
+                <?php else: ?> 
+                    <a href="<?=URL?>/control/?active=<?=$game['game_id']?>">inactive</a>
+                <?php endif; ?>
+            </td>
 
             <td>
                 <a href="<?=URL?>/control/edit_game.php?id=<?=$game['game_id']?>">edit</a>

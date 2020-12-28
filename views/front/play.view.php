@@ -30,6 +30,10 @@
             </div>
             
             <form action="" method="post">
+                <?php if ($error && !empty($error)): ?>
+                    <div class="game-play-error"><?=$error?></div>
+                <?php endif;?>
+
                 <div class="game-answer-content">
                     <?php foreach ($answerblocks as $answerblock): ?>
                         <div class="game-answer-radio">
@@ -39,6 +43,7 @@
                     <?php endforeach; ?>
                 </div>
                 <div class="game-answer-submit">
+                    <input type="hidden" name="submission">
                     <button type="submit"><?=$last_round ? 'end' : 'next'?></button>
                 </div>
             </form>

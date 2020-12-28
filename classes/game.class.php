@@ -25,7 +25,7 @@ class Game
         
         $categories = $this->get_categories();
         foreach ($categories as $category) {
-            $games = $this->get_game_by('game_category_id', $category['category_id'], true);
+            $games = $this->get_active_game_by('game_category_id', $category['category_id'], true);
             
             array_push($data, $category);
             $category_index = count($data) - 1;
@@ -67,7 +67,7 @@ class Game
     public function get_game_front ($game_id)
     {
         
-        $game = $this->get_game_by('game_id', $game_id);
+        $game = $this->get_active_game_by('game_id', $game_id);
 
         if ($game === false || empty($game)) {
             return false;
@@ -93,6 +93,24 @@ class Game
 
         return $game;
         
+    }
+
+    public function save_game_ending ($ending, $end_count, $game_id, $name)
+    {
+        $q = "UPDATE `games` SET `game_$ending` = :e WHERE `game_id` = :i";
+        $s = $this->db->prepare($q);
+        $s->bindParam(':e', $end_count);
+        $s->bindParam(':i', $game_id);
+        $r = $s->execute();
+
+        $q = "INSERT INTO `game_results` (`result_game_id`, `result_game_ending`, `result_name`) VALUE (:i, :e, :n)";
+        $s = $this->db->prepare($q);
+        $s->bindParam(":i", $game_id);
+        $s->bindParam(":e", $ending);
+        $s->bindParam(":n", $name);
+        $r = $s->execute();
+
+        return $r;
     }
 
     public function insert_category ($name)
@@ -165,6 +183,31 @@ class Game
             return $s->fetch();
         }
         return false;
+    }
+    
+    public function get_active_game_by($col, $val, $multiple = false)
+    {
+        $q = "SELECT * FROM `games` g WHERE `$col` = :v AND `game_active` = '1'";
+        $s = $this->db->prepare($q);
+        $s->bindParam(':v', $val);
+
+        if ($s->execute()) {
+            if ($multiple) {
+                return $s->fetchAll();
+            }
+            return $s->fetch();
+        }
+        return false;
+    }
+
+    public function set_game_status($status, $game_id)
+    {
+        $q = "UPDATE `games` SET `game_active` = :s WHERE `game_id` = :i";
+        $s = $this->db->prepare($q);
+        $s->bindParam(":s", $status);
+        $s->bindParam(":i", $game_id);
+        
+        return $s->execute();
     }
 
     public function get_all_game_information ($game_id)

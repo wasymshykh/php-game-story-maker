@@ -20,6 +20,27 @@ if (!$game || empty($game)) {
     go(URL . '/front');
 }
 
+if (!isset($game['rounds']) || empty($game['rounds'])) {
+    go(URL . '/front');
+}
+
+if (isset($_SESSION['finished']) && !empty($_SESSION['finished']) && $game['game_id'] === $_SESSION['finished']) {
+    go(URL . '/front/finish.php');
+}
+
+if (!isset($_SESSION['game']) || $_SESSION['game'] !== $game['game_id']) {
+    $_SESSION['game'] = $game['game_id'];
+}
+
+// checking for error message
+$error = false;
+if (isset($_SESSION['message']) && !empty($_SESSION['message'])) {
+    if ($_SESSION['message']['type'] === 'error') {
+        $error = $_SESSION['message']['message'];
+    }
+    unset($_SESSION['message']);
+}
+
 // check which round user is in
 $last_round = false;
 if (isset($_SESSION['round']) && !empty($_SESSION['round'])) {
@@ -83,6 +104,11 @@ foreach ($game['rounds'] as $round) {
 
             // pushing passed input to text block
             if ($passed) {
+                // auto setting condition 
+                if (isset($textblock['tb_auto_set']) && !empty($textblock['tb_auto_set'])) {
+                    $_SESSION[$conditions_id[$textblock['tb_auto_set']]] = true;
+                }
+
                 array_push($textblocks, $textblock);
             }
         }
@@ -136,6 +162,45 @@ foreach ($game['rounds'] as $round) {
     $round_index++;
 }
 
+// getting answer
+if (isset($_POST) && !empty($_POST)) {
+
+    if (!isset($_POST['answer']) || !is_numeric($_POST['answer']) || empty($_POST['answer'])) {
+        $_SESSION['message'] = ['type' => 'error', 'message' => 'select answer before submitting'];       
+        go(URL . '/front/play.php?game=' . $game['game_id']);
+    }
+    
+    // check for valid answer id.
+    $found = false;
+    foreach ($answerblocks as $answerblock) {
+        if ($answerblock['ab_id'] === $_POST['answer']) {
+            $found = $answerblock;
+            break;
+        }
+    }
+    
+    if ($found === false) {
+        $_SESSION['message'] = ['type' => 'error', 'message' => 'invalid answer selected.'];       
+        go(URL . '/front/play.php?game=' . $game['game_id']);
+    }
+
+    // setting and unsetting session and round session
+    if (isset($found['ab_auto_set']) && !empty($found['ab_auto_set'])) {
+        $_SESSION[$conditions_id[$found['ab_auto_set']]] = true;
+        if (strpos($conditions_id[$found['ab_auto_set']], 'end') !== false) {
+            go(URL . '/front/finish.php');
+        }
+    } 
+    if (isset($found['ab_unset']) && !empty($found['ab_unset']) && isset($_SESSION[$conditions_id[$found['ab_unset']]])) {
+        unset($_SESSION[$conditions_id[$found['ab_unset']]]);
+    }
+    
+    if (!$last_round) {
+        $_SESSION['round'] = (string)($round_number+1);
+        go(URL . '/front/play.php?game=' . $game['game_id']);
+    }
+    
+}
 
 include_once DIR . 'views/front/header.view.php';
 include_once DIR . 'views/front/play.view.php';
