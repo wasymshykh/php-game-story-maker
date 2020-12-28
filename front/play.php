@@ -137,6 +137,6 @@ foreach ($game['rounds'] as $round) {
 }
 
 
-include_once DIR . 'views/control/header.view.php';
+include_once DIR . 'views/front/header.view.php';
 include_once DIR . 'views/front/play.view.php';
-include_once DIR . 'views/control/footer.view.php';
+include_once DIR . 'views/front/footer.view.php';
