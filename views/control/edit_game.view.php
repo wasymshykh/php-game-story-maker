@@ -202,7 +202,6 @@ $('#save-conditions').on('click', (e) => {
     });
 
     update_to_select_boxes_name();
-    console.log(conditions_value_by_name);
 })
 
 $('#save').on('click', (e) => {

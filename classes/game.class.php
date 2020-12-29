@@ -263,6 +263,7 @@ class Game
 
     public function update_game_conditions ($data, $game_id)
     {
+        $r = true;
         foreach ($data as $condition_id => $condition_value) {
             
             $q = "UPDATE `game_conditions` SET `gc_condition_value` = '$condition_value' WHERE `gc_condition_id` = :i AND `gc_game_id` = :gi";
@@ -270,8 +271,23 @@ class Game
             $s->bindParam(':i', $condition_id);
             $s->bindParam(':gi', $game_id);
 
+            $r = $s->execute();
+        }
+        return $r;
+    }
+
+    public function delete_game_conditions ($data, $game_id)
+    {        
+        $r = true;
+        foreach ($data as $condition_id) {
+            $q = "DELETE FROM `game_conditions` WHERE `gc_condition_id` = :i AND `gc_game_id` = :gi";
+            $s = $this->db->prepare($q);
+            $s->bindParam(':i', $condition_id);
+            $s->bindParam(':gi', $game_id);
+
             $s->execute();
         }
+        return $r;
     }
 
     public function create_game ($cat_id, $title, $author, $picture, $audio)

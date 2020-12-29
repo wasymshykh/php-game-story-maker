@@ -211,14 +211,24 @@ elseif (isset($_GET['add_round']) && isset($_GET['round_number'])) {
     if (isset($_POST['condition'])) {
         $insert = [];
         $update = [];
+        $delete = [];
         
 
         $g = new Game($db);
         $game_conditions = $g->get_game_conditions ($_POST['save_conditions']);
 
+        // sorting game conditions, [game_condition_id]->condition
+        $game_conditions_by_id = [];
+        foreach ($game_conditions as $c) {
+            $game_conditions_by_id[$c['gc_condition_id']] = $c;
+        }
+
     
         foreach ($_POST['condition'] as $condition_id => $condition_value) {
             if (empty(normal_text($condition_value))) {
+                if (array_key_exists($condition_id, $game_conditions_by_id)) {
+                    array_push($delete, $condition_id);
+                }
                 continue;
             }
             $found = false;
@@ -243,6 +253,9 @@ elseif (isset($_GET['add_round']) && isset($_GET['round_number'])) {
         }
         if (!empty($update)) {
             $success = $g->update_game_conditions ($update, $_POST['save_conditions']);
+        }
+        if (!empty($delete)) {
+            $success = $g->delete_game_conditions ($delete, $_POST['save_conditions']);
         }
         
         if ($success) {
