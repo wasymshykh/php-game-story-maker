@@ -61,7 +61,7 @@
                             <select name="conditions_1[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">no condition *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$textblock['tb_condition_1_id'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$textblock['tb_condition_1_id'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
 
@@ -73,7 +73,7 @@
                             <select name="conditions_2[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">-- *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$textblock['tb_condition_2_id'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$textblock['tb_condition_2_id'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -87,7 +87,7 @@
                             <select name="autoset[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">-- *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$textblock['tb_auto_set'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$textblock['tb_auto_set'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -108,7 +108,7 @@
                             <select name="aconditions_1[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">no condition *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_condition_1_id'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_condition_1_id'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
 
@@ -120,7 +120,7 @@
                             <select name="aconditions_2[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">-- *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_condition_2_id'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_condition_2_id'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -135,7 +135,7 @@
                             <select name="aautoset[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">-- *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_auto_set'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_auto_set'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
                             <br>
@@ -143,7 +143,7 @@
                             <select name="aautounset[<?=$round_id?>][]" class="select-conditions">
                                 <option value="">-- *</option>
                                 <?php foreach ($condition_details as $n => $c): ?>
-                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_unset'] === $c['condition_id'] ? 'selected' : ''?>><?=$n?></option>
+                                <option value="<?=$c['condition_id']?>" <?=$answerblock['ab_unset'] === $c['condition_id'] ? 'selected' : ''?>><?=array_key_exists($n, $conditions_value_by_name) ? $conditions_value_by_name[$n] : $n?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -200,6 +200,9 @@ $('#save-conditions').on('click', (e) => {
             }
         }
     });
+
+    update_to_select_boxes_name();
+    console.log(conditions_value_by_name);
 })
 
 $('#save').on('click', (e) => {
@@ -304,12 +307,82 @@ function add_events_on_buttons () {
 add_events_on_buttons();
 
 const game_id = <?=$game['game_id']?>;
-const conditions_by_name = {<?php foreach($conditions_by_name as $name => $value){echo "'$name': '$value',";}?>};
+const conditions_by_name = {<?php foreach($conditions_by_name as $name => $value) {echo "'$name': '$value',";}?>};
+const conditions_value_by_name = {<?php foreach($conditions_value_by_name as $name => $value) {echo "'$name': '$value',";} ?>};
 
 function add_to_select_boxes (e) {
     let answers = $('.select-conditions');
     answers.each(i => {
         $(answers[i]).append($('<option>', {value:conditions_by_name[e], text:e}));
+    });
+}
+
+function update_to_select_boxes_name (e) {
+    // removing old data
+    for (let prop in conditions_value_by_name){
+        if (conditions_value_by_name.hasOwnProperty(prop)){
+            delete conditions_value_by_name[prop];
+        }
+    }
+
+    // updating condition_value_by_name array
+    $('.condition-box').each((i, el) => {
+        let s_children = $(el).children();
+
+        let name = s_children[0].textContent;
+        let value = s_children[1].value;
+
+        
+
+        if (value.trim() !== '') {
+            conditions_value_by_name[name] = value;
+        }
+
+
+    });
+
+    let answers = $('.select-conditions');
+    answers.each(i => {
+        let options = $(answers[i]).children();
+        $(options).each(o => {
+            let condition_text = $(options[o]).text();
+            if (condition_text !== 'no condition *' && condition_text !== '-- *') {
+
+                if (conditions_value_by_name.hasOwnProperty(condition_text)) {
+                    $(options[o]).text(conditions_value_by_name[condition_text]);
+                } else if (!conditions_by_name.hasOwnProperty(condition_text)) {
+
+                    let found = false;
+                    for (old in conditions_value_by_name) {
+                        if (conditions_value_by_name[old] === condition_text) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+
+                        // finding condition name by condition id 
+                        let condition_id = $(options[o]).val();
+                        let original_name = "";
+                        for (c in conditions_by_name) {
+                            if (conditions_by_name[c] === condition_id) {
+                                original_name = c;
+                                break;
+                            }
+                        }
+                        
+                        if (original_name !== "") {
+                            if (conditions_value_by_name.hasOwnProperty(original_name)) {
+                                $(options[o]).text(conditions_value_by_name[original_name]);
+                            } else {
+                                $(options[o]).text(original_name);
+                            }
+                        }
+                    }
+                }
+
+            }
+        });
     });
 }
 
